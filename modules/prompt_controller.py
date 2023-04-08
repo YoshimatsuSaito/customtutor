@@ -9,7 +9,7 @@ load_dotenv(".env")
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-class DocumentGenerator:
+class SequentialGenerator:
     """与えられたトピックとステップ数から、ドキュメント全体を逐次的に生成する
     TODO: max_tokens制限を強制的に解決しているので、langchainなどの使用でより効率的にする"""
     def __init__(
@@ -72,7 +72,7 @@ class DocumentGenerator:
         )
 
 
-class StepGenerator:
+class IndependentGenerator:
     """与えられたステップとステップ数から、ドキュメントの目次を生成し、その目次を所与として、与えられたステップ番号のドキュメントを作成する
     各ドキュメントは、目次とステップ番号との関係でのみ生成される
     TODO: max_tokensによる制限を回避するための方法であるが、ステップ間の関係を構築することができないため、langchainなどによる効率的な実装が求められる
