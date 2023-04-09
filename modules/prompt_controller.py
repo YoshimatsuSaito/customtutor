@@ -1,5 +1,6 @@
 import ast
 import os
+from typing import Optional
 
 import openai
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ class SequentialGenerator:
     TODO: max_tokens制限を強制的に解決しているので、langchainなどの使用でより効率的にする"""
     def __init__(
         self,
-        topic: str, 
+        topic: str,
         num_steps: int, 
         model_name: str="gpt-3.5-turbo",
         max_tokens: int=4096,
@@ -23,20 +24,27 @@ class SequentialGenerator:
         self.num_steps = num_steps
         self.model_name = model_name
         # 全ステップのドキュメントを生成してもmax_tokensを超えないように各ステップのmax_tokensを制限する
-        self.max_tokens_of_each_response = int(max_tokens / self.num_steps + 1)
-        self.list_message = []
-        self.system_message = None
+        self.max_tokens_of_each_response = int(max_tokens / (self.num_steps + 1))
+        # chatリストを格納する
+        self.list_message: list[dict[str, str]] = []
+        # 各ステップのドキュメント部分のみを格納する
+        self.dict_step: dict[str, str] = dict()
+        # ドキュメント全体を結合したmarkdownを格納する
+        self.document: str = ""
+        # システムメッセージの設定
         self.set_system_message()
     
     def set_system_message(self) -> None:
-        """ドキュメント生成についての設定をシステムメッセージに与える"""
-        self.system_message = f"""
+        """ドキュメント生成についての設定をシステムメッセージに与える
+        ひとまず言語設定はしないことにする. 以下のようなメッセージである程度制御できるが不安定. やるなら明示的に言語を指定する.
+        You must output as same language as input (ex. If input is Japanese, output must be Japanese).
+        """
+        system_message = f"""
         You are an excellent tutor.
         You generate documents to learn "{self.topic}" by {self.num_steps} step.
         You must return each step if user input "Generate step : 'step number'".
         You must not generate multiple steps at once.
         Output of each step must be markdown format.
-        You must output as same language as input (ex. If input is Japanese, output must be Japanese).
         Each step format is as follows.
         
         # Step 'insert step number': 'insert step title'
@@ -46,7 +54,7 @@ class SequentialGenerator:
         """
         self.list_message.append(
             {
-                "role": "system", "content": self.system_message
+                "role": "system", "content": system_message
             }
         )
 
@@ -70,6 +78,20 @@ class SequentialGenerator:
                 "role": "assistant", "content": assistant_message
             }
         )
+    
+    def make_dict_step(self):
+        """chatリストからステップごとのドキュメントを抽出する"""
+        for message in self.list_message:
+            if message["role"] == "assistant":
+                content = message["content"]
+                step = content.split("# Step ")[1].split(":")[0]
+                self.dict_step[step] = content
+
+    def make_document(self):
+        """chatリストからmarkdownドキュメントを生成する"""
+        for message in self.list_message:
+            if message["role"] == "assistant":
+                self.document += message["content"] + "\n\n"
 
 
 class IndependentGenerator:
@@ -100,7 +122,6 @@ class IndependentGenerator:
         You generate documents to learn {self.topic} by {self.num_steps} step.
         You must return table of contents.
         Each step should not depend on the content of other steps.
-        You must output as same language as input (ex. If input is Japanese, output must be Japanese).
         Output format must be python dict format as follows.
         Step 'insert step number': 'insert step title',...
         """
@@ -132,7 +153,6 @@ class IndependentGenerator:
         {self.table_of_contents}
 
         You must generate documents of step {step_number}.
-        You must output as same language as input (ex. If input is Japanese, output must be Japanese).
         The content of the step must stand alone and be independent of the content of other steps.
         Output must be markdown format.
         Output format is as follows.
@@ -154,3 +174,63 @@ class IndependentGenerator:
         )
         assistant_message = res["choices"][0]["message"]["content"]
         self.dict_generated_step[step_number] = assistant_message
+
+
+class SimpleGenerator:
+    """ゼロベースでchatgptのapiを使うだけ"""
+    def __init__(self, model_name="gpt-3.5-turbo", max_tokens=2048) -> None:
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.list_message = []
+    
+    def generate(self, user_message: str) -> None:
+        """ユーザからの入力を受け取り回答を追加する"""
+        self.list_message.append(
+            {
+                "role": "user", "content": user_message
+            }
+        )
+        res = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=self.list_message,
+            max_tokens=self.max_tokens,
+        )
+        self.list_message.append(res["choices"][0]["message"])
+
+
+class QuestionAnsweringGenerator:
+    """与えられた文章を元にした回答を行う
+    chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
+    def __init__(self, dict_step: dict[str, str], model_name="gpt-3.5-turbo", max_tokens=4096) -> None:
+        self.dict_step = dict_step
+        self.model_name = model_name
+        # 文字数制限対策のために雑に調整
+        self.max_tokens_of_each_response = int(max_tokens / 3)
+    
+    def generate_answer(self, step: str, question: str) -> str:
+        """質問に対する回答を生成する"""
+        user_message = f"""
+        You are an excellent tutor.
+        You must generate helpful answer to the question below.
+        {question}
+
+        The answer must be based on the document below.
+        {self.dict_step[step]}
+
+        If question is not directly related to the document, you must mention about that and return the answer of the question based on your general knowledge.
+        
+        Your answer must be simple and short without compromising the intent of the question and without reducing the information in the answer.
+        """
+
+        list_message = [
+            {
+                "role": "user", "content": user_message
+            },
+        ]
+        res = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=list_message,
+            max_tokens=self.max_tokens_of_each_response,
+        )
+        assistant_message = res["choices"][0]["message"]["content"]
+        return assistant_message
