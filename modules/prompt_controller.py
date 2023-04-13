@@ -1,6 +1,5 @@
 import ast
 import os
-from typing import Optional
 
 import openai
 from dotenv import load_dotenv
@@ -86,13 +85,6 @@ class SequentialGenerator:
                 content = message["content"]
                 step = content.split("# Step ")[1].split(":")[0]
                 self.dict_step[step] = content
-
-    def make_document(self):
-        """chatリストからmarkdownドキュメントを生成する"""
-        for message in self.list_message:
-            if message["role"] == "assistant":
-                self.document += message["content"] + "\n\n"
-
 
 class IndependentGenerator:
     """与えられたステップとステップ数から、ドキュメントの目次を生成し、その目次を所与として、与えられたステップ番号のドキュメントを作成する
@@ -201,7 +193,8 @@ class SimpleGenerator:
 class QuestionAnsweringGenerator:
     """与えられた文章を元にした回答を行う
     chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
-    def __init__(self, dict_step: dict[str, str], model_name="gpt-3.5-turbo", max_tokens=4096) -> None:
+    def __init__(self, topic: str, dict_step: dict[str, str], model_name="gpt-3.5-turbo", max_tokens=4096) -> None:
+        self.topic = topic
         self.dict_step = dict_step
         self.model_name = model_name
         # 文字数制限対策のために雑に調整
@@ -217,7 +210,9 @@ class QuestionAnsweringGenerator:
         The answer must be based on the document below.
         {self.dict_step[step]}
 
-        If question is not directly related to the document, you must mention about that and return the answer of the question based on your general knowledge.
+        You must consider that the document is a part of the document to learn {self.topic}.
+
+        If question is not directly related to the document and topic, you must mention about that and return the answer of the question based on your general knowledge.
         
         Your answer must be simple and short without compromising the intent of the question and without reducing the information in the answer.
         """
