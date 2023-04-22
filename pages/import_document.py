@@ -2,8 +2,9 @@ import pickle
 
 import streamlit as st
 
+from modules.cloud_storage_operations import CloudStorageAPI
 from modules.prompt_controller import QuestionAnsweringGenerator
-from modules.utils import set_export_section, make_document, get_list_file, read_pkl_from_s3
+from modules.utils import set_export_section, make_document
 
 # setting of page
 st.set_page_config(
@@ -33,6 +34,7 @@ if "num_steps_imported" not in st.session_state:
 
 # title
 st.title("Import document")
+st.markdown("You can import a document from your local machine or cloud storage.")
 
 # import steps from local file
 col_local, col_cloud = st.columns([1, 1])
@@ -53,10 +55,12 @@ if uploaded_file is not None:
 
 data_from_cloud = None
 with col_cloud:
-    list_file = get_list_file()
-    topic_name = st.selectbox("Import a documnt from cloud storage", list_file)
+    cloud_storage_api = CloudStorageAPI()
+    cloud_storage_api.set_resource()
+    list_file = cloud_storage_api.get_list_pkl_file()
+    topic_name = st.selectbox("Choose a documnt to import from cloud storage", list_file)
     if st.button("Import Cloud File"):
-        data_from_cloud = read_pkl_from_s3(topic_name)
+        data_from_cloud = cloud_storage_api.read_pkl_from_s3(topic_name)
         
 if data_from_cloud is not None:
     st.session_state.dict_step_imported = data_from_cloud["dict_step"]
@@ -94,4 +98,4 @@ if st.session_state.imported:
     )
     
 else:
-    st.write("Please import a pickle file.")
+    st.warning("Please import a pickle file.")

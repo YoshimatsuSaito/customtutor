@@ -168,28 +168,6 @@ class IndependentGenerator:
         self.dict_generated_step[step_number] = assistant_message
 
 
-class SimpleGenerator:
-    """ゼロベースでchatgptのapiを使うだけ"""
-    def __init__(self, model_name="gpt-3.5-turbo", max_tokens=2048) -> None:
-        self.model_name = model_name
-        self.max_tokens = max_tokens
-        self.list_message = []
-    
-    def generate(self, user_message: str) -> None:
-        """ユーザからの入力を受け取り回答を追加する"""
-        self.list_message.append(
-            {
-                "role": "user", "content": user_message
-            }
-        )
-        res = openai.ChatCompletion.create(
-            model=self.model_name,
-            messages=self.list_message,
-            max_tokens=self.max_tokens,
-        )
-        self.list_message.append(res["choices"][0]["message"])
-
-
 class QuestionAnsweringGenerator:
     """与えられた文章を元にした回答を行う
     chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""

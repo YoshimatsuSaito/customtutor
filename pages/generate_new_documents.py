@@ -71,7 +71,6 @@ if st.session_state.generated and st.session_state.topic == topic and st.session
                 with st.spinner(f"Generating answer..."):
                     answer = st.session_state.qa_gen.generate_answer(question=question, step=str(step))
             col_qa.write(answer)
-    
 
     # set download section
     set_export_section(
