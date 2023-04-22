@@ -3,8 +3,9 @@ import pickle
 import streamlit as st
 
 from modules.cloud_storage_operations import CloudStorageAPI
+from modules.components import set_export_section
 from modules.prompt_controller import QuestionAnsweringGenerator
-from modules.utils import set_export_section, make_document
+from modules.utils import make_document
 
 # setting of page
 st.set_page_config(

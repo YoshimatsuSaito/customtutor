@@ -1,7 +1,8 @@
 import streamlit as st
 
+from modules.components import set_export_section
 from modules.prompt_controller import SequentialGenerator, QuestionAnsweringGenerator
-from modules.utils import set_export_section, make_document
+from modules.utils import make_document
 
 # setting of page
 st.set_page_config(
@@ -33,7 +34,7 @@ if "num_steps" not in st.session_state:
 st.title("Generate new document")
 
 # input form
-topic = st.text_input("Enter the topic you want to learn (e.g. Introduction to Python): ", value="Introduction to Python")
+topic = st.text_input("Enter the topic you want to learn (e.g. Introduction to Python): ")
 num_steps = st.selectbox("Select the number of steps to learn the topic", list(range(1, 11)), index=4)
 
 # generate steps sequentially
