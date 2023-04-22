@@ -21,6 +21,7 @@ def get_resource(aws_access_key_id: str, aws_secret_access_key: str) -> boto3.re
     )
     return s3_resource
 
+
 def make_document(dict_step: dict[str, str]) -> str:
     """chatリストからmarkdownドキュメントを生成する"""
     document = ""
