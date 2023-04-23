@@ -1,6 +1,6 @@
 import streamlit as st
 
-from modules.components import set_export_section
+from modules.cloud_storage_operations import CloudStorageAPI
 from modules.prompt_controller import SequentialGenerator, QuestionAnsweringGenerator
 from modules.utils import make_document
 
@@ -73,13 +73,19 @@ if st.session_state.generated and st.session_state.topic == topic and st.session
                     answer = st.session_state.qa_gen.generate_answer(question=question, step=str(step))
             col_qa.write(answer)
 
-    # set download section
-    set_export_section(
-        document=st.session_state.document.encode(),
-        topic=st.session_state.topic,
-        num_steps=st.session_state.num_steps,
-        dict_step=st.session_state.dict_step,
-    )
-    
+    # export to cloud
+    data_to_export = {
+        "dict_step": st.session_state.dict_step,
+        "topic": st.session_state.topic,
+        "num_steps": st.session_state.num_steps,
+    }
+    st.markdown("---")
+    if st.button("Export This Document to Cloud Storage"):
+        # TODO: duplicate topic check
+        cloud_storage_api = CloudStorageAPI()
+        cloud_storage_api.set_resource()
+        cloud_storage_api.write_pkl_to_s3(data_to_export, f"{topic}.pkl")
+        st.info(f"{topic}.pkl was exported to cloud storage")
+
 else:
     st.warning("Please generate a document first.")

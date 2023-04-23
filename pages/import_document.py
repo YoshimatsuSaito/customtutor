@@ -3,7 +3,6 @@ import pickle
 import streamlit as st
 
 from modules.cloud_storage_operations import CloudStorageAPI
-from modules.components import set_export_section
 from modules.prompt_controller import QuestionAnsweringGenerator
 from modules.utils import make_document
 
@@ -35,33 +34,14 @@ if "num_steps_imported" not in st.session_state:
 
 # title
 st.title("Import document")
-st.markdown("You can import a document from your local machine or cloud storage.")
-
-# import steps from local file
-col_local, col_cloud = st.columns([1, 1])
-
-with col_local:
-    uploaded_file = st.file_uploader("Import a local pickle file", type="pkl")
-
-if uploaded_file is not None:
-    data_from_local = pickle.load(uploaded_file)
-    st.session_state.dict_step_imported = data_from_local["dict_step"]
-    st.session_state.document_imported = make_document(dict_step=st.session_state.dict_step_imported)
-    st.session_state.topic_imported = data_from_local["topic"]
-    st.session_state.num_steps_imported = data_from_local["num_steps"]
-    st.session_state.qa_gen_for_imported = QuestionAnsweringGenerator(
-        topic=st.session_state.topic_imported, dict_step=st.session_state.dict_step_imported
-    )
-    st.session_state.imported = True
 
 data_from_cloud = None
-with col_cloud:
-    cloud_storage_api = CloudStorageAPI()
-    cloud_storage_api.set_resource()
-    list_file = cloud_storage_api.get_list_pkl_file()
-    topic_name = st.selectbox("Choose a documnt to import from cloud storage", list_file)
-    if st.button("Import Cloud File"):
-        data_from_cloud = cloud_storage_api.read_pkl_from_s3(topic_name)
+cloud_storage_api = CloudStorageAPI()
+cloud_storage_api.set_resource()
+list_file = cloud_storage_api.get_list_pkl_file()
+topic_name = st.selectbox("Choose a documnt to import from cloud storage", list_file)
+if st.button("Import Cloud File"):
+    data_from_cloud = cloud_storage_api.read_pkl_from_s3(topic_name)
         
 if data_from_cloud is not None:
     st.session_state.dict_step_imported = data_from_cloud["dict_step"]
@@ -90,13 +70,6 @@ if st.session_state.imported:
                     answer = st.session_state.qa_gen_for_imported.generate_answer(question=question, step=str(step))
             col_qa.write(answer)
     
-    # download document and pickle data
-    set_export_section(
-        document=st.session_state.document_imported.encode(),
-        topic=st.session_state.topic_imported,
-        num_steps=st.session_state.num_steps_imported,
-        dict_step=st.session_state.dict_step_imported,
-    )
     
 else:
     st.warning("Please import a pickle file.")
