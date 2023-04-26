@@ -48,5 +48,6 @@ class CloudStorageAPI:
         list_topicdir = []
         for obj in bucket.objects.all():
             topicdir = obj.key.split('/')[0]
-            list_topicdir.append(topicdir)
+            if topicdir not in list_topicdir:
+                list_topicdir.append(topicdir)
         return list_topicdir

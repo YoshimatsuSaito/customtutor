@@ -77,22 +77,31 @@ if st.session_state.generated and st.session_state.topic == topic and st.session
                     answer = st.session_state.qa_gen.generate_answer(question=question, step=str(step))
             col_qa.write(answer)
 
-    # export to cloud
-    data_to_export = {
-        "dict_step": st.session_state.dict_step,
-        "topic": st.session_state.topic,
-        "num_steps": st.session_state.num_steps,
-    }
     st.markdown("---")
+
+    rating = st.slider("Rating this document (1~5)", min_value=0.0, max_value=5.0, value=0.0, step=1.0)
     if st.button("Export This Document to Cloud Storage"):
-        # to make the dir name unique
-        current_time = datetime.now(jst)
-        formatted_time = current_time.strftime("%Y%m%d%H%M%S")
-        # export to cloud storage
-        cloud_storage_api = CloudStorageAPI()
-        cloud_storage_api.set_resource()
-        cloud_storage_api.write_pkl_to_s3(data_to_export, f"{topic}_{formatted_time}/document.pkl")
-        st.info("This document was exported to cloud storage")
+        if rating < 1:
+            st.warning("Please rate this document between 1 and 5")
+        else:
+            # to make the dir name unique
+            current_time = datetime.now(jst)
+            formatted_time = current_time.strftime("%Y%m%d%H%M%S")
+            dir_name = f"{topic}_{formatted_time}"
+
+            # data to export
+            data_to_export = {
+                "dict_step": st.session_state.dict_step,
+                "topic": st.session_state.topic,
+                "num_steps": st.session_state.num_steps,
+            }
+            
+            # export to cloud storage
+            cloud_storage_api = CloudStorageAPI()
+            cloud_storage_api.set_resource()
+            cloud_storage_api.write_pkl_to_s3(data_to_export, f"{dir_name}/document.pkl")
+            cloud_storage_api.write_pkl_to_s3([rating], f"{dir_name}/rating.pkl")
+            st.info("This document was exported to cloud storage")
 
 else:
     st.warning("Please generate a document first.")
