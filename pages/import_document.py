@@ -38,10 +38,10 @@ st.title("Import document")
 data_from_cloud = None
 cloud_storage_api = CloudStorageAPI()
 cloud_storage_api.set_resource()
-list_file = cloud_storage_api.get_list_pkl_file()
-topic_name = st.selectbox("Choose a documnt to import from cloud storage", list_file)
+list_topic = cloud_storage_api.get_list_topic()
+topic_name = st.selectbox("Choose a documnt to import from cloud storage", list_topic)
 if st.button("Import Cloud File"):
-    data_from_cloud = cloud_storage_api.read_pkl_from_s3(topic_name)
+    data_from_cloud = cloud_storage_api.read_pkl_from_s3(f"{topic_name}/document.pkl")
         
 if data_from_cloud is not None:
     st.session_state.dict_step_imported = data_from_cloud["dict_step"]
@@ -69,7 +69,13 @@ if st.session_state.imported:
                 with st.spinner(f"Generating answer..."):
                     answer = st.session_state.qa_gen_for_imported.generate_answer(question=question, step=str(step))
             col_qa.write(answer)
+    # rating = st.slider("Rating this document", 0.0, 5.0, 2.5, 0.5)
+    # if st.button("Submit Rating"):
+    #     cloud_storage_api = CloudStorageAPI()
+    #     cloud_storage_api.set_resource()
+    #     cloud_storage_api.write_pkl_to_s3(rating, f"{topic}.pkl")
+    #     st.info(f"Send your rating: {rating}")
     
-    
+
 else:
     st.warning("Please import a pickle file.")

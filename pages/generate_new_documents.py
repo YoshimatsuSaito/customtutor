@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 import streamlit as st
 
 from modules.cloud_storage_operations import CloudStorageAPI
@@ -10,6 +13,7 @@ st.set_page_config(
     page_icon=":robot_face:",
     layout="wide",
 )
+jst = pytz.timezone("Asia/Tokyo")
 
 # Initialize session_state if not already
 if "generated" not in st.session_state:
@@ -81,11 +85,14 @@ if st.session_state.generated and st.session_state.topic == topic and st.session
     }
     st.markdown("---")
     if st.button("Export This Document to Cloud Storage"):
-        # TODO: duplicate topic check
+        # to make the dir name unique
+        current_time = datetime.now(jst)
+        formatted_time = current_time.strftime("%Y%m%d%H%M%S")
+        # export to cloud storage
         cloud_storage_api = CloudStorageAPI()
         cloud_storage_api.set_resource()
-        cloud_storage_api.write_pkl_to_s3(data_to_export, f"{topic}.pkl")
-        st.info(f"{topic}.pkl was exported to cloud storage")
+        cloud_storage_api.write_pkl_to_s3(data_to_export, f"{topic}_{formatted_time}/document.pkl")
+        st.info("This document was exported to cloud storage")
 
 else:
     st.warning("Please generate a document first.")
