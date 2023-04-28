@@ -3,10 +3,10 @@ import streamlit as st
 st.title("Custom Tutor")
 
 str_markdown = """
-- LLM will generate a document with the topic you want to learn by the number of steps you want to learn.
-- You can ask questions about the document and LLM will answer your questions.
-- Everyone who uses this app can export the document to Cloud Storage and import those documents to this app.
+- 学びたいトピックと学びたいステップ数を入力すると、AIが学習用のドキュメントを生成します。
+- 生成されたドキュメントに対して疑問があれば、AIが答えてくれます。
+- 生成したドキュメントはクラウドストレージに登録でき、ユーザ間でシェアできます。
 
-Go to sidebar and select the function which you want to use!
+早速サイドバーから機能を選択してみましょう！
 """
 st.markdown(str_markdown)
