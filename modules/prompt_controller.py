@@ -16,8 +16,8 @@ class SequentialGenerator:
         self,
         topic: str,
         num_steps: int, 
-        model_name: str="gpt-3.5-turbo",
-        max_tokens: int=4096,
+        model_name: str="gpt-4",
+        max_tokens: int=8192,
     ) -> None:
         self.topic = topic
         self.num_steps = num_steps
@@ -168,7 +168,7 @@ class IndependentGenerator:
         self.dict_generated_step[step_number] = assistant_message
 
 
-class QuestionAnsweringGenerator:
+class StepQuestionAnsweringGenerator:
     """与えられた文章を元にした回答を行う
     chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
     def __init__(self, topic: str, dict_step: dict[str, str], model_name="gpt-3.5-turbo", max_tokens=4096) -> None:
@@ -207,3 +207,98 @@ class QuestionAnsweringGenerator:
         )
         assistant_message = res["choices"][0]["message"]["content"]
         return assistant_message
+
+
+class BulkGenerator:
+    """与えられたトピックとステップ数から、ドキュメント全体を一括で生成する"""
+    def __init__(
+        self,
+        topic: str,
+        model_name: str="gpt-4",
+        max_tokens: int=8192,
+    ) -> None:
+        self.topic = topic
+        self.model_name = model_name
+        # 雑な文字数制限対策
+        self.max_tokens = int(max_tokens / 2)
+        # chatリストを格納する
+        self.list_message: list[dict[str, str]] = []
+        # システムメッセージの設定
+        self.set_system_message()
+        self.document = None
+    
+    def set_system_message(self) -> None:
+        """ドキュメント生成についての設定をシステムメッセージに与える
+        TODO: 本来はシステムメッセージをクラスの中でハードコーディングしないほうがいいと思われる"""
+        system_message = f"""
+        「{self.topic}」というタイトルで教材を生成してください。
+        教材は以下の要件を満たすものとします。
+        - マークダウン形式であること
+        - 教材は適切な項目ごとに分割されていること（必要に応じて、ステップで区切ってください）
+        - 各段階を学習することでトピックに関するスキルや知識を段階的に高められること
+        - トピックに関するスキルや知識を習得するために必要な情報を網羅したものであること
+        - ユーザが実際に試すことのできる実践的な内容が含まれていること
+        - 完結していること（他の教材を参照することなく、単体で学習できること）
+        """
+        self.list_message.append(
+            {
+                "role": "system", "content": system_message
+            }
+        )
+
+    def generate_document(self):
+        """ドキュメントを一括で生成する"""
+        self.list_message.append(
+            {
+                "role": "user", "content": "Generate document"
+            }
+        )
+        res = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=self.list_message,
+            max_tokens=self.max_tokens,
+        )
+        assistant_message = res["choices"][0]["message"]["content"]
+        self.list_message.append(
+            {
+                "role": "assistant", "content": assistant_message
+            }
+        )
+        self.document = assistant_message
+
+
+class QuestionAnsweringGenerator:
+    """与えられた文章を元にした回答を行う
+    chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
+    def __init__(self, topic: str, document: str, model_name="gpt-4", max_tokens=8192) -> None:
+        self.topic = topic
+        self.document = document
+        self.model_name = model_name
+        # 雑な文字数制限対策
+        self.max_tokens = int(max_tokens / 3)
+    
+    def generate_answer(self, question: str) -> str:
+        """質問に対する回答を生成する"""
+        user_message = f"""
+        下記の質問にわかりやすく答えてください。
+        「{question}」
+
+        回答の際には下記のドキュメント内容を踏まえてください。
+        「{self.document}」
+
+        もし質問がドキュメントに直接関連がない場合は、その旨を指摘したうえで、一般的な知識に基づいて回答してください。
+        """
+
+        list_message = [
+            {
+                "role": "user", "content": user_message
+            },
+        ]
+        res = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=list_message,
+            max_tokens=self.max_tokens,
+        )
+        assistant_message = res["choices"][0]["message"]["content"]
+        return assistant_message
+    

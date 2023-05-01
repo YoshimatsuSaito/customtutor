@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  app:
+    image: customtutor
+    build: .
+    env_file:
+      - .env
+    ports:
+      - $PORT:$PORT
+    stdin_open: true
+    tty: true

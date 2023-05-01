@@ -42,11 +42,12 @@ class CloudStorageAPI:
         s3_resource_output_object = self.s3_resource.Object(self.bucket_name, file_name)
         s3_resource_output_object.put(Body=pickle_byte_obj)
 
-    def get_list_pkl_file(self, subfolder=None) -> list[Any]:
+    def get_list_topic(self) -> list[str]:
         """get file list saved in S3"""
-        if subfolder is None:
-            folder_info_obj = self.s3_resource.Bucket(self.bucket_name).objects.all()
-        else:
-            folder_info_obj = self.s3_resource.Bucket(self.bucket_name).objects.filter(Prefix=subfolder)
-        list_file = [i.key for i in folder_info_obj if ".pkl" in i.key]
-        return list_file
+        bucket = self.s3_resource.Bucket(self.bucket_name)
+        list_topicdir = []
+        for obj in bucket.objects.all():
+            topicdir = obj.key.split('/')[0]
+            if topicdir not in list_topicdir:
+                list_topicdir.append(topicdir)
+        return list_topicdir

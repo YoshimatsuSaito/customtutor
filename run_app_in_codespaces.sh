@@ -1,1 +1,1 @@
-streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false
+streamlit run Home.py --server.enableCORS false --server.enableXsrfProtection false
