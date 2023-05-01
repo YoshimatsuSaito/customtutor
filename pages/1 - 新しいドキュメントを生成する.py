@@ -28,7 +28,7 @@ if "topic" not in st.session_state:
     st.session_state.topic = None
 
 # title
-st.title("Generate new document")
+st.title("新しい教材を生成する")
 
 # input form
 topic = st.text_input("学びたいトピック (例: Python入門): ")
