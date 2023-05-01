@@ -30,6 +30,9 @@ if "topic_imported" not in st.session_state:
 if "topic_dir_name" not in st.session_state:
     st.session_state.topic_dir_name = None
 
+if "answer"  not in st.session_state:
+    st.session_state.answer = None
+
 # title
 st.title("ドキュメントを読み込む")
 
@@ -72,8 +75,8 @@ if st.session_state.imported:
     if col_qa.button("質問する"):
         with col_qa:
             with st.spinner("回答生成中..."):
-                answer = st.session_state.qa_gen_for_imported.generate_answer(question=question)
-        col_qa.write(answer)
+                st.session_state.answer = st.session_state.qa_gen_for_imported.generate_answer(question=question)
+    col_qa.write(st.session_state.answer)
 
     st.markdown("---")
     rating = st.slider("ドキュメントを評価する(1~5)", min_value=0.0, max_value=5.0, value=0.0, step=1.0)

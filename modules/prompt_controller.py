@@ -270,7 +270,7 @@ class BulkGenerator:
 class QuestionAnsweringGenerator:
     """与えられた文章を元にした回答を行う
     chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
-    def __init__(self, topic: str, document: str, model_name="gpt-4", max_tokens=8192) -> None:
+    def __init__(self, topic: str, document: str, model_name="gpt-3.5-turbo", max_tokens=4096) -> None:
         self.topic = topic
         self.document = document
         self.model_name = model_name
@@ -280,7 +280,7 @@ class QuestionAnsweringGenerator:
     def generate_answer(self, question: str) -> str:
         """質問に対する回答を生成する"""
         user_message = f"""
-        下記の質問にわかりやすく答えてください。
+        下記の質問にわかりやすく、簡潔に答えてください。
         「{question}」
 
         回答の際には下記のドキュメント内容を踏まえてください。
