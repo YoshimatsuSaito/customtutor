@@ -214,17 +214,13 @@ class BulkGenerator:
     def __init__(
         self,
         topic: str,
-        num_steps: int, 
         model_name: str="gpt-4",
         max_tokens: int=8192,
-        lang: str="japanese",
     ) -> None:
         self.topic = topic
-        self.num_steps = num_steps
         self.model_name = model_name
         # 雑な文字数制限対策
         self.max_tokens = int(max_tokens / 2)
-        self.lang = lang
         # chatリストを格納する
         self.list_message: list[dict[str, str]] = []
         # システムメッセージの設定
@@ -235,18 +231,14 @@ class BulkGenerator:
         """ドキュメント生成についての設定をシステムメッセージに与える
         TODO: 本来はシステムメッセージをクラスの中でハードコーディングしないほうがいいと思われる"""
         system_message = f"""
-        You are an excellent tutor.
-        You generate documents to learn "{self.topic}" by {self.num_steps} step if user input "Generate document".
-        The output must be in {self.lang}.
-        The output must be markdown format.
-        The output must follow the format below, and no other output is allowed.
-        
-        ## Step 'insert step number': 'insert step title'
-        
-        'insert content'
-
-        ,,,
-
+        「{self.topic}」というタイトルで教材を生成してください。
+        教材は以下の要件を満たすものとします。
+        - マークダウン形式であること
+        - 教材は適切な項目ごとに分割されていること（必要に応じて、ステップで区切ってください）
+        - 各段階を学習することでトピックに関するスキルや知識を段階的に高められること
+        - トピックに関するスキルや知識を習得するために必要な情報を網羅したものであること
+        - ユーザが実際に試すことのできる実践的な内容が含まれていること
+        - 完結していること（他の教材を参照することなく、単体で学習できること）
         """
         self.list_message.append(
             {
@@ -278,28 +270,23 @@ class BulkGenerator:
 class QuestionAnsweringGenerator:
     """与えられた文章を元にした回答を行う
     chat形式にすると複雑化するので、一旦は毎度一問一答形式で答える"""
-    def __init__(self, topic: str, document: str, model_name="gpt-4", max_tokens=8192, lang="japanese") -> None:
+    def __init__(self, topic: str, document: str, model_name="gpt-4", max_tokens=8192) -> None:
         self.topic = topic
         self.document = document
         self.model_name = model_name
         # 雑な文字数制限対策
         self.max_tokens = int(max_tokens / 3)
-        self.lang = lang
     
     def generate_answer(self, question: str) -> str:
         """質問に対する回答を生成する"""
         user_message = f"""
-        You are an excellent tutor.
-        You must generate helpful answer to the question below.
-        {question}
+        下記の質問にわかりやすく答えてください。
+        「{question}」
 
-        The answer must be based on the document below.
-        {self.document}
+        回答の際には下記のドキュメント内容を踏まえてください。
+        「{self.document}」
 
-        You must consider that the document is a part of the document to learn {self.topic}.
-        If question is not directly related to the document and topic, you must mention about that and return the answer of the question based on your general knowledge.
-        Your answer must be simple and short without compromising the intent of the question and without reducing the information in the answer.
-        Your answer must be in {self.lang}.
+        もし質問がドキュメントに直接関連がない場合は、その旨を指摘したうえで、一般的な知識に基づいて回答してください。
         """
 
         list_message = [

@@ -35,14 +35,14 @@ st.title("Generate new document")
 
 # input form
 topic = st.text_input("学びたいトピック (例: Python入門): ")
-num_steps = st.selectbox("何ステップで学ぶか", list(range(1, 11)), index=4)
+# num_steps = st.selectbox("何ステップで学ぶか", list(range(1, 11)), index=4)
 
 # generate steps sequentially
 if st.button("ドキュメントを生成する"):
     st.session_state.topic = topic
-    st.session_state.num_steps = num_steps
+    # st.session_state.num_steps = num_steps
 
-    generator = BulkGenerator(topic=st.session_state.topic, num_steps=st.session_state.num_steps)
+    generator = BulkGenerator(topic=st.session_state.topic)
     with st.spinner("ドキュメント作成中..."):
         generator.generate_document()
 
@@ -51,11 +51,11 @@ if st.button("ドキュメントを生成する"):
     st.session_state.generated = True
 
 # display each step
-if st.session_state.generated and st.session_state.topic == topic and st.session_state.num_steps == num_steps:
+if st.session_state.generated and st.session_state.topic == topic:
     st.markdown("---")
     col_doc, col_qa = st.columns([7, 3])
     col_doc.markdown(st.session_state.document)
-    question = col_qa.text_area("質問を入力してみよう: ", height=10)
+    question = col_qa.text_area("質問を入力してみよう: ", height=50)
     if col_qa.button("質問する"):
         with col_qa:
             with st.spinner("回答生成中..."):
