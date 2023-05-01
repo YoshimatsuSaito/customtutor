@@ -27,9 +27,6 @@ if "document_imported" not in st.session_state:
 if "topic_imported" not in st.session_state:
     st.session_state.topic_imported = None
 
-if "num_steps_imported" not in st.session_state:
-    st.session_state.num_steps_imported = None
-
 if "topic_dir_name" not in st.session_state:
     st.session_state.topic_dir_name = None
 
@@ -59,7 +56,6 @@ if data_from_cloud is not None:
     st.session_state.document_imported = data_from_cloud["document"]
     st.session_state.topic_imported = data_from_cloud["topic"]
     st.session_state.topic_dir_name = topic # unique dir name
-    st.session_state.num_steps_imported = data_from_cloud["num_steps"]
     st.session_state.qa_gen_for_imported = QuestionAnsweringGenerator(
         topic=st.session_state.topic_imported, document=st.session_state.document_imported
     )

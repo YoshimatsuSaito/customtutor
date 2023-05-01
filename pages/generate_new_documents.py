@@ -27,20 +27,15 @@ if "document" not in st.session_state:
 if "topic" not in st.session_state:
     st.session_state.topic = None
 
-if "num_steps" not in st.session_state:
-    st.session_state.num_steps = None
-
 # title
 st.title("Generate new document")
 
 # input form
 topic = st.text_input("学びたいトピック (例: Python入門): ")
-# num_steps = st.selectbox("何ステップで学ぶか", list(range(1, 11)), index=4)
 
 # generate steps sequentially
 if st.button("ドキュメントを生成する"):
     st.session_state.topic = topic
-    # st.session_state.num_steps = num_steps
 
     generator = BulkGenerator(topic=st.session_state.topic)
     with st.spinner("ドキュメント作成中..."):
@@ -78,7 +73,6 @@ if st.session_state.generated and st.session_state.topic == topic:
             data_to_export = {
                 "document": st.session_state.document,
                 "topic": st.session_state.topic,
-                "num_steps": st.session_state.num_steps,
             }
             
             # export to cloud storage
