@@ -43,17 +43,31 @@ cloud_storage_api.set_resource()
 
 # get list of topics and ratings
 list_topic = cloud_storage_api.get_list_topic()
-list_avg_rating = [np.mean(cloud_storage_api.read_pkl_from_s3(f"{topic}/rating.pkl")) for topic in list_topic]
+
+list_avg_rating = []
+for topic in list_topic:
+    # when there is a rating
+    try:
+        list_avg_rating.append(np.mean(cloud_storage_api.read_pkl_from_s3(f"{topic}/rating.pkl")))
+    # when there is no rating
+    except:
+        list_avg_rating.append("評価なし")
 
 # for user interface
 list_option = [f"{topic} ★{avg_rating}" for topic, avg_rating in zip(list_topic, list_avg_rating)]
 option = st.selectbox("読み込むドキュメントを選ぶ", list_option)
+st.markdown(
+    """
+    【注】
+    - 生成したドキュメントが見つからない場合はページを更新してみてください。
+    - 評価が1つもついていないドキュメントは定期的に削除されます。
+    """
+)
 
 # get topic(dir) name
 num_index = list_option.index(option)
 topic = list_topic[num_index]
-if st.button("読み込む"):
-    data_from_cloud = cloud_storage_api.read_pkl_from_s3(f"{topic}/document.pkl")
+data_from_cloud = cloud_storage_api.read_pkl_from_s3(f"{topic}/document.pkl")
         
 if data_from_cloud is not None:
     st.session_state.document_imported = data_from_cloud["document"]
@@ -68,7 +82,6 @@ if data_from_cloud is not None:
 # display each step
 if st.session_state.imported:
     st.markdown("---")
-    st.title(f"Topic: {st.session_state.topic_imported}")
     col_doc, col_qa = st.columns([7, 3])
     col_doc.markdown(st.session_state.document_imported)
     question = col_qa.text_area("質問を入力してみよう: ", height=10)
@@ -84,12 +97,17 @@ if st.session_state.imported:
         if rating < 1:
             st.warning("1から5の間で評価してください。")
         else:
-            # read rating from cloud storage
-            ratings = cloud_storage_api.read_pkl_from_s3(f"{st.session_state.topic_dir_name}/rating.pkl")
-            ratings.append(rating)
+            # when there is at least one rating
+            try:
+                # read rating from cloud storage
+                ratings = cloud_storage_api.read_pkl_from_s3(f"{st.session_state.topic_dir_name}/rating.pkl")
+                ratings.append(rating)
+            # when this is the first rating
+            except:
+                ratings = [rating]
             # export to cloud storage
             cloud_storage_api.write_pkl_to_s3(ratings, f"{st.session_state.topic_dir_name}/rating.pkl")
-            st.info("Your rating was added.")
+            st.info("あなたの評価が送信されました.")
 
 else:
     st.warning("ドキュメントを読み込んでください。")

@@ -4,31 +4,19 @@ from typing import Any
 
 import boto3
 
-from dotenv import load_dotenv
-
-# load .env file
-load_dotenv(".env")
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
 
 
 class CloudStorageAPI:
     """Cloud Storage API for AWS S3
     TODO: error handling"""
-    def __init__(self, aws_access_key_id: str=AWS_ACCESS_KEY_ID, aws_secret_access_key: str=AWS_SECRET_ACCESS_KEY, bucket_name: str=BUCKET_NAME) -> None:
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+    def __init__(self, bucket_name: str=BUCKET_NAME):
         self.bucket_name = bucket_name
         self.s3_resource = None
 
     def set_resource(self) -> None:
         """set s3 resource"""
-        self.s3_resource = boto3.resource(
-            "s3",
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-        )
+        self.s3_resource = boto3.resource("s3")
 
     def read_pkl_from_s3(self, file_name) -> Any:
         """read pickle file from S3"""
@@ -51,3 +39,4 @@ class CloudStorageAPI:
             if topicdir not in list_topicdir:
                 list_topicdir.append(topicdir)
         return list_topicdir
+    
