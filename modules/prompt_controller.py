@@ -214,45 +214,41 @@ class BulkGenerator:
     def __init__(
         self,
         topic: str,
-        model_name: str="gpt-4",
-        max_tokens: int=8192,
+        model_name: str="gpt-3.5-turbo",
+        max_tokens: int=4092,
     ) -> None:
         self.topic = topic
         self.model_name = model_name
         # 雑な文字数制限対策
-        self.max_tokens = int(max_tokens / 2)
+        self.max_tokens = int(max_tokens / 2.5)
         # chatリストを格納する
         self.list_message: list[dict[str, str]] = []
         # システムメッセージの設定
-        self.set_system_message()
+        self.set_message()
         self.document = None
     
-    def set_system_message(self) -> None:
+    def set_message(self) -> None:
         """ドキュメント生成についての設定をシステムメッセージに与える
         TODO: 本来はシステムメッセージをクラスの中でハードコーディングしないほうがいいと思われる"""
-        system_message = f"""
+        message = f"""
         「{self.topic}」というタイトルで教材を生成してください。
         教材は以下の要件を満たすものとします。
-        - マークダウン形式であること（ドキュメント内へのアンカーリンクは作成しないでください）
-        - 教材は適切な項目ごとに分割されていること（必要に応じて、ステップで区切ってください）
+        - マークダウン形式であること
+        - ドキュメント内へのリンクを作成しないこと
+        - 教材は適切な項目ごとに分割されていること
         - 各段階を学習することでトピックに関するスキルや知識を段階的に高められること
         - トピックに関するスキルや知識を習得するために必要な情報を網羅したものであること
         - ユーザが実際に試すことのできる実践的な内容が含まれていること
-        - 完結していること（他の教材を参照することなく、単体で学習できること）
+        - 他の教材を参照することなく、この教材だけで学習が完結すること
         """
         self.list_message.append(
             {
-                "role": "system", "content": system_message
+                "role": "user", "content": message
             }
         )
 
     def generate_document(self):
         """ドキュメントを一括で生成する"""
-        self.list_message.append(
-            {
-                "role": "user", "content": "Generate document"
-            }
-        )
         res = openai.ChatCompletion.create(
             model=self.model_name,
             messages=self.list_message,
@@ -265,6 +261,35 @@ class BulkGenerator:
             }
         )
         self.document = assistant_message
+
+    def adjust_document(self, adjusting_point: str) -> None:
+        """ドキュメントを洗練させる"""
+        message = f"""
+        下記の【教材】を、以下の【観点】で修正し、修正済みの教材を出力してください。
+        修正済みの教材は以下の【要件】を満たすものとします。
+
+        【要件】
+        - マークダウン形式であること
+        - ドキュメント内へのリンクを作成しないこと
+        - 教材は適切な項目ごとに分割されていること
+        - 各段階を学習することでトピックに関するスキルや知識を段階的に高められること
+        - トピックに関するスキルや知識を習得するために必要な情報を網羅したものであること
+        - ユーザが実際に試すことのできる実践的な内容が含まれていること
+        - 他の教材を参照することなく、この教材だけで学習が完結すること
+        
+        【観点】
+        {adjusting_point}
+        
+        【教材】
+        {self.document}
+        """
+        res = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": message}],
+            max_tokens=self.max_tokens,
+        )
+        self.document = res["choices"][0]["message"]["content"]
+
 
 
 class QuestionAnsweringGenerator:

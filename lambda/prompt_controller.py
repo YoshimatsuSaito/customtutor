@@ -1,18 +1,16 @@
-import ast
 import os
 
 import openai
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-
 class BulkGenerator:
     """与えられたトピックとステップ数から、ドキュメント全体を一括で生成する"""
     def __init__(
         self,
         topic: str,
-        model_name: str="gpt-4",
-        max_tokens: int=8192,
+        model_name: str="gpt-3.5-turbo",
+        max_tokens: int=4092,
     ) -> None:
         self.topic = topic
         self.model_name = model_name
