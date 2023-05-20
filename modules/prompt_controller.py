@@ -1,5 +1,6 @@
 import ast
 import os
+from typing import Union
 
 import openai
 from dotenv import load_dotenv
@@ -87,85 +88,78 @@ class SequentialGenerator:
                 self.dict_step[step] = content
 
 class IndependentGenerator:
-    """与えられたステップとステップ数から、ドキュメントの目次を生成し、その目次を所与として、与えられたステップ番号のドキュメントを作成する
-    各ドキュメントは、目次とステップ番号との関係でのみ生成される
-    TODO: max_tokensによる制限を回避するための方法であるが、ステップ間の関係を構築することができないため、langchainなどによる効率的な実装が求められる
-    """
+    """与えられたステップとステップ数から、ドキュメントの目次を生成し、その目次を所与として、与えられたステップ番号のドキュメントを作成する"""
     def __init__(
         self,
         topic: str,
-        num_steps: int,
         model_name: str="gpt-3.5-turbo",
         max_tokens: int=4096,
     ) -> None:
         self.topic = topic
-        self.num_steps = num_steps
         self.model_name = model_name
         # そのステップのドキュメントを生成してもmax_tokensを超えないようにmax_tokensを適当に調整する
-        self.max_tokens_of_each_response = max_tokens - 500
-        self.table_of_contents = None
-        self.dict_generated_step = dict()
+        self.max_tokens = int(max_tokens / 2.5)
+        self.dict_table_of_contents = None
+        self.dict_document = dict()
         self.set_table_of_contents()
 
     def set_table_of_contents(self) -> None:
         """ドキュメントの目次を生成する。これは繰り返し使用する"""
         user_message = f"""
-        You are an excellent tutor.
-        You generate documents to learn {self.topic} by {self.num_steps} step.
-        You must return table of contents.
-        Each step should not depend on the content of other steps.
-        Output format must be python dict format as follows.
-        Step 'insert step number': 'insert step title',...
-        """
-        list_message = [
-            {
-                "role": "user", "content": user_message
-            }
-        ]
-        res = openai.ChatCompletion.create(
-            model=self.model_name,
-            messages=list_message,
-            max_tokens=self.max_tokens_of_each_response,
-        )
-        assistant_message = res["choices"][0]["message"]["content"]
-        self.str_table_of_contents = assistant_message
-        self.dict_table_of_contents = ast.literal_eval(assistant_message)
+            「{self.topic}」というタイトルで教材を作りたい。
+            教材を作るにあたり、ユーザが段階的に技能を身に着けられるよう、テーマを分解したい。
+            適切なサブトピック、つまり、教材の目次、を作成せよ。
 
-    def generate_a_step(self, step_number: int) -> None:
-        """生成した目次に従って、与えられたステップ番号のドキュメントを生成する。
-        過去に一度生成した文章は再度生成できないようにする（内容が実行のたびに変わるのを防ぐため）
+            出力の形式は以下のjson形式とする。
+
+            {{
+                {{1}}:{{サブトピック名}},
+                {{2}}:{{サブトピック名}},
+                ...
+            }}
         """
-        if step_number in self.dict_generated_step.keys():
-            return
+        is_success = False
+        n_stop = 0
+        while not is_success and n_stop < 10:
+            res = openai.ChatCompletion.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": user_message}],
+                max_tokens=self.max_tokens,
+            )
+            table_of_contents = res["choices"][0]["message"]["content"]
+            try:
+                self.dict_table_of_contents = ast.literal_eval(table_of_contents)
+                is_success = True
+            except:
+                n_stop += 1
+        
+        if not is_success:
+            raise Exception("Failed to generate table of contents.")
+
+    def generate_a_document(self, key: Union[str, int]) -> None:
+        """生成した目次のkeyを与え、そのkeyのドキュメントを生成する"""
+
         user_message = f"""
-        You are an excellent tutor.
-        You generate documents to learn "{self.topic}".
-        Table of contents of the documents is as follows.
+            「{self.topic}」というタイトルで教材を作成している。
+            
+            教材の目次は、以下である。
+            {self.dict_table_of_contents}
+            このうち、あなたは、「{self.dict_table_of_contents[key]}」の部分を作成する担当となった。
 
-        {self.table_of_contents}
-
-        You must generate documents of step {step_number}.
-        The content of the step must stand alone and be independent of the content of other steps.
-        Output must be markdown format.
-        Output format is as follows.
-        
-        # Step {step_number}: {self.dict_table_of_contents[f"Step {step_number}"]}
-        
-        'insert content'
-
+            以下の要件を満たしたドキュメントを生成せよ。
+            - マークダウン形式であること
+            - 「{self.dict_table_of_contents[key]}」に関するスキルや知識を習得するために必要な情報を網羅したものであること
+            - ユーザが実際に試すことのできる実践的な内容が含まれていること
+            - 他の教材を参照することなく、そのドキュメントだけで学習可能であること
+            - 他の目次の項目に関わる部分は極力含めないこと
         """
-        list_message = [
-            {
-                "role": "user", "content": user_message
-            }
-        ]
         res = openai.ChatCompletion.create(
             model=self.model_name,
-            messages=list_message,
-            max_tokens=self.max_tokens_of_each_response,
+            messages=[{"role": "user", "content": user_message}],
+            max_tokens=self.max_tokens,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
-        self.dict_generated_step[step_number] = assistant_message
+        document = res["choices"][0]["message"]["content"]
+        self.dict_document[key] = document
 
 
 class StepQuestionAnsweringGenerator:
