@@ -3,6 +3,7 @@ import os
 from typing import Union
 
 import openai
+import streamlit as st
 from dotenv import load_dotenv
 
 # load .env file
@@ -296,3 +297,66 @@ class QuestionAnsweringGenerator:
         assistant_message = res["choices"][0]["message"]["content"]
         return assistant_message
     
+
+def create_table_of_contents(topic: str, model_name: str="gpt-3.5-turbo", max_tokens: int=2048) -> str:
+    """目次を生成する"""
+    user_message = f"""
+        「{topic}」というタイトルで教材を作りたい。
+        教材を作るにあたり、ユーザが段階的に技能を身に着けられるよう、テーマを分解したい。
+        適切なサブトピック、つまり、教材の目次、を作成せよ。
+
+        出力の形式は以下のjson形式とする。
+
+        {{
+            {{1}}:{{サブトピック名}},
+            {{2}}:{{サブトピック名}},
+            ...
+        }}
+    """
+    res = openai.ChatCompletion.create(
+        model=model_name,
+        messages=[{"role": "user", "content": user_message}],
+        max_tokens=max_tokens,
+    )
+    table_of_contents = res["choices"][0]["message"]["content"]
+    return table_of_contents
+
+
+def convert_to_dict(table_of_contents: str) -> dict[int, str]:
+    """目次をstringから所定の形式のdictに変換する"""
+    _dict = ast.literal_eval(table_of_contents)
+    dict_table_of_contents = {int(k): v for k, v in _dict.items()}
+    return dict_table_of_contents
+
+
+def stream_chapter(
+    topic: str, 
+    dict_table_of_contents: dict[int, str], 
+    chapter: int, 
+    model_name: str="gpt-3.5-turbo", 
+    max_tokens: int=3072,
+) -> str:
+    """生成した目次のkeyを与え、そのkeyのドキュメントを生成する"""
+
+    user_message = f"""
+        「{topic}」というタイトルで教材を作成している。
+        
+        教材の目次は、以下である。
+        {dict_table_of_contents}
+        このうち、あなたは、「{dict_table_of_contents[chapter]}」の部分を作成する担当となった。
+        担当部分に関して、読者がスキルや知識を習得できる素晴らしいドキュメントを作成せよ。
+
+        以下の要件を満たしたドキュメントを生成せよ。
+        - マークダウン形式であること
+        - コードサンプルのような、ユーザが実際に試すことのできる実践的な内容が含まれていること
+        - 担当部分以外の項目に関わる説明をあなたの担当部分の中に含めないこと
+        - # {chapter}. {dict_table_of_contents[chapter]} という見出しで始まること
+    """
+    res_stream = openai.ChatCompletion.create(
+        model=model_name,
+        messages=[{"role": "user", "content": user_message}],
+        max_tokens=max_tokens,
+        stream=True,
+    )
+
+    return res_stream
