@@ -1,4 +1,3 @@
-import os
 import pytz
 from datetime import datetime
 
@@ -34,12 +33,9 @@ if "document" not in st.session_state:
 if "dict_document_chapter" not in st.session_state:
     st.session_state.dict_document_chapter = dict()
 
-if "keep_generating" not in st.session_state:
-    st.session_state.keep_generating = False
-
 
 # title
-st.title("学びたいことを学ぼう")
+st.title("新規の学習用ドキュメントを作成する")
 
 # input form
 topic = st.text_input("トピック (例: Python入門): ")
@@ -50,12 +46,13 @@ with st.expander("使い方"):
         """
         - 「教材の作成を始める」を押すと、ドキュメントの目次が作成されます。
         - 目次が作成されたら、「次のチャプターを作成する」を押すと、目次の中でまだ作成されていない最初のチャプターのドキュメントが生成されます。
+        - ※ 画面を更新するとそれまで作成したドキュメントが初期化されるので、ご注意ください。
         - ※メンテナンス中: チャプター生成中に、`Bad message format`エラーが出ることがあります。エラーメッセージを閉じ、再び「次のチャプターを作成する」ボタンを押してドキュメントの作成を再開してください。
         """
     )
     
 # ボタンが押されたら、目次を作成する
-if st.button("教材の作成を始める"):
+if st.button("ドキュメントの作成を始める"):
     with st.spinner("構成を考えています..."):
         # jsonに変換できる形式で出力が得られない場合があるので、10回までリトライする
         is_success = False
@@ -113,7 +110,6 @@ if st.session_state.dict_table_of_contents is not None and st.session_state.gene
         # すべてのチャプター作成が終わっていたらこのwhile処理を終わらせる
         if n_chapter_to_generate is None:
             # 全体の作成が終わったら、この分岐でドキュメントを生成するのをやめ、後続の全体表示でドキュメントを表示させる
-            st.session_state.keep_generating = False
             st.session_state.generated = True
         # まだ作成していないチャプターがある場合、streamで作成し、それをempty箇所に表示する
         else:
