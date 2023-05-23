@@ -68,6 +68,3 @@ if st.session_state.imported:
             # export to cloud storage
             cloud_storage_api.write_pkl_to_s3(ratings, f"{st.session_state.topic_dir_name}/rating.pkl")
             st.info("あなたの評価を送りました！")
-
-else:
-    st.warning("ドキュメントを読み込んでください。")

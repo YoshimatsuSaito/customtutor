@@ -6,6 +6,6 @@ services:
     env_file:
       - .env
     ports:
-      - $PORT:$PORT
+      - "${PORT}:{PORT}"
     stdin_open: true
     tty: true

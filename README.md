@@ -25,7 +25,7 @@ This repositry tries to make an app that generates documents about anything you 
     ```
 5. Run app
     ```bash
-    streamlit run app.py
+    streamlit run Home.py
 
     # if you want to run app in github codespaces, run below
     # sh run_app_in_codespaces.sh
@@ -54,7 +54,13 @@ This repositry tries to make an app that generates documents about anything you 
     ```bash 
     docker-compose exec app /bin/bash
     ```
-6. Run app in the container
+6. Activate virtual env
     ```bash
-    streamlit run app.py --server.port {your port number}
+    pipenv shell
+    
+    # Create virtual env in docker container is inefficient. Fix me.
+    ```
+7. Run app in the container
+    ```bash
+    streamlit run Home.py --server.port {your port number}
     ```
