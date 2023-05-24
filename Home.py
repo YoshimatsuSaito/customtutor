@@ -135,6 +135,12 @@ if st.session_state.dict_table_of_contents is not None and st.session_state.gene
             # そのチャプターの生成が終わったら、全体ドキュメントとチャプタードキュメントを更新する
             st.session_state.document += f"{document_so_far}\n"
             st.session_state.dict_document_chapter[n_chapter_to_generate] = f"{document_so_far}\n"
+
+            # 全チャプターの作成が終わっていたら、状態を更新する
+            if len(st.session_state.dict_document_chapter) == len(st.session_state.dict_table_of_contents):
+                st.session_state.generated = True
+                st.info("全チャプターの作成が完了しました")
+                st.experimental_rerun()
             
 # 全体のドキュメント作成が終わっていたら、それを表示する
 elif st.session_state.generated is True:
