@@ -4,13 +4,13 @@ from typing import Any
 
 import boto3
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # load .env file
-load_dotenv(".env")
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-BUCKET_NAME = os.environ.get("BUCKET_NAME")
+# load_dotenv(".env")
+AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
+BUCKET_NAME = st.secrets["BUCKET_NAME"]
 
 
 class CloudStorageAPI:

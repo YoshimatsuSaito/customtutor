@@ -4,11 +4,11 @@ from typing import Union
 
 import openai
 import streamlit as st
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # load .env file
-load_dotenv(".env")
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# load_dotenv(".env")
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 class SequentialGenerator:
