@@ -35,7 +35,7 @@ if "dict_document_chapter" not in st.session_state:
 
 
 # title
-st.title("IT技術学習のためのカスタム教材生成器")
+st.title("テック学習のための教材生成")
 
 # input form
 topic = st.text_input("トピック (例: Python入門): ")
