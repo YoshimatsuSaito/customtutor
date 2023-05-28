@@ -3,6 +3,7 @@ import pickle
 from typing import Any
 
 import boto3
+import streamlit as st
 
 # from dotenv import load_dotenv
 
