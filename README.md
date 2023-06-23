@@ -5,6 +5,7 @@ This repository contains an app that generates personalized learning materials b
 - You need to have an AWS account and access key.
 - You need to create a S3 bucket on your AWS account.
 - You need to have an OpenAI API key.
+- You need to have a server to host this app. Ensure that port 8501 is open for connections.
 
 ## Set up environment and run app
 ### From your terminal (you need to install python3.10)
@@ -35,6 +36,8 @@ This repository contains an app that generates personalized learning materials b
     # if you want to run app in github codespaces, run below
     # sh run_app_in_codespaces.sh
     ```
+6. Check app
+    - Access the app by navigating to http://{your-server-ip-address}:8501 in your web browser.
 
 ### From docker container (recommended)
 1. Install docker and docker-compose at your machine
@@ -50,7 +53,9 @@ This repository contains an app that generates personalized learning materials b
     ```bash
     docker-compose build
     ```
-4. Start docker container
+4. Start docker container and run app
     ```bash
     docker-compose up -d
     ```
+5. Check app
+    - Access the app by navigating to http://{your-server-ip-address}:8501 in your web browser.
