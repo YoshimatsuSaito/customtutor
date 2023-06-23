@@ -1,8 +1,13 @@
 # Custom Tutor
-This repositry tries to make an app that generates documents about anything you want to learn.
+This repository contains an app that generates personalized learning materials based on your chosen topics.
+
+## Prerequisites
+- You need to have an AWS account and access key.
+- You need to create a S3 bucket on your AWS account.
+- You need to have an OpenAI API key.
 
 ## Set up environment and run app
-### from your terminal (you need to install python3.10)
+### From your terminal (you need to install python3.10)
 1. Install pipenv at your machine
     ```bash
     pip install pipenv
@@ -15,7 +20,7 @@ This repositry tries to make an app that generates documents about anything you 
     ```bash
     pipenv shell
     ```
-4. Create .env file under this directory and write below
+4. Create a `.env` file under this directory and fill in the necessary information as shown below:
     ```bash
     # .env
     OPENAI_API_KEY="{your openai api key}"
@@ -31,16 +36,15 @@ This repositry tries to make an app that generates documents about anything you 
     # sh run_app_in_codespaces.sh
     ```
 
-### from docker container (recommended)
+### From docker container (recommended)
 1. Install docker and docker-compose at your machine
-2. Create .env file under this directory and write below
+2. Create a `.env` file under this directory and fill in the necessary information as shown below:
     ```bash
     # .env
     OPENAI_API_KEY="{your openai api key}"
     AWS_ACCESS_KEY_ID="{your access key id}"
     AWS_SECRET_ACCESS_KEY="{your secret access key}"
     BUCKET_NAME="{your bucket name}"
-    PORT={your port number}
     ```
 3. Create docker images
     ```bash
@@ -49,18 +53,4 @@ This repositry tries to make an app that generates documents about anything you 
 4. Start docker container
     ```bash
     docker-compose up -d
-    ```
-5. Enter into docker container
-    ```bash 
-    docker-compose exec app /bin/bash
-    ```
-6. Activate virtual env
-    ```bash
-    pipenv shell
-    
-    # Create virtual env in docker container is inefficient. Fix me.
-    ```
-7. Run app in the container
-    ```bash
-    streamlit run Home.py --server.port {your port number}
     ```

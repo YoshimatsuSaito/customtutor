@@ -6,6 +6,8 @@ services:
     env_file:
       - .env
     ports:
-      - "${PORT}:${PORT}"
+      - "8501:8501"
     stdin_open: true
     tty: true
+    restart: always
+    command: pipenv run streamlit run Home.py --server.port 8501
