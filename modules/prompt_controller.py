@@ -2,13 +2,12 @@ import ast
 import os
 from typing import Union
 
-import openai
+from openai import OpenAI
 import streamlit as st
 from dotenv import load_dotenv
 
 # load .env file
 load_dotenv(".env")
-openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 class SequentialGenerator:
@@ -34,6 +33,8 @@ class SequentialGenerator:
         self.document: str = ""
         # システムメッセージの設定
         self.set_system_message()
+        # クライアント
+        self.client = OpenAI()
     
     def set_system_message(self) -> None:
         """ドキュメント生成についての設定をシステムメッセージに与える
@@ -68,12 +69,12 @@ class SequentialGenerator:
                 "role": "user", "content": f"Generate step: {step}"
             }
         )
-        res = openai.ChatCompletion.create(
+        res = sef.client.chat.completions.create(
             model=self.model_name,
             messages=self.list_message,
             max_tokens=self.max_tokens_of_each_response,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         self.list_message.append(
             {
                 "role": "assistant", "content": assistant_message
@@ -98,6 +99,8 @@ class IndependentGenerator:
     ) -> None:
         self.topic = topic
         self.model_name = model_name
+        # クライアント
+        self.client = OpenAI()
         # そのステップのドキュメントを生成してもmax_tokensを超えないようにmax_tokensを適当に調整する
         self.max_tokens = int(max_tokens / 2.5)
         self.dict_table_of_contents = None
@@ -122,12 +125,12 @@ class IndependentGenerator:
         is_success = False
         n_stop = 0
         while not is_success and n_stop < 10:
-            res = openai.ChatCompletion.create(
+            res = sef.client.chat.completions.create(
                 model=self.model_name,
                 messages=[{"role": "user", "content": user_message}],
                 max_tokens=self.max_tokens,
             )
-            table_of_contents = res["choices"][0]["message"]["content"]
+            table_of_contents = res.choices[0].message.content
             try:
                 self.dict_table_of_contents = ast.literal_eval(table_of_contents)
                 is_success = True
@@ -154,12 +157,12 @@ class IndependentGenerator:
             - 他の教材を参照することなく、そのドキュメントだけで学習可能であること
             - 他の目次の項目に関わる部分は極力含めないこと
         """
-        res = openai.ChatCompletion.create(
+        res = sef.client.chat.completions.create(
             model=self.model_name,
             messages=[{"role": "user", "content": user_message}],
             max_tokens=self.max_tokens,
         )
-        document = res["choices"][0]["message"]["content"]
+        document = res.choices[0].message.content
         self.dict_document[key] = document
 
 
@@ -170,6 +173,8 @@ class StepQuestionAnsweringGenerator:
         self.topic = topic
         self.dict_step = dict_step
         self.model_name = model_name
+        # クライアント
+        self.client = OpenAI()
         # 文字数制限対策のために雑に調整
         self.max_tokens_of_each_response = int(max_tokens / 3)
     
@@ -195,12 +200,12 @@ class StepQuestionAnsweringGenerator:
                 "role": "user", "content": user_message
             },
         ]
-        res = openai.ChatCompletion.create(
+        res = sef.client.chat.completions.create(
             model=self.model_name,
             messages=list_message,
             max_tokens=self.max_tokens_of_each_response,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         return assistant_message
 
 
@@ -214,6 +219,8 @@ class BulkGenerator:
     ) -> None:
         self.topic = topic
         self.model_name = model_name
+        # クライアント
+        self.client = OpenAI()
         # 雑な文字数制限対策
         self.max_tokens = int(max_tokens / 2)
         # chatリストを格納する
@@ -248,12 +255,12 @@ class BulkGenerator:
                 "role": "user", "content": "Generate document"
             }
         )
-        res = openai.ChatCompletion.create(
+        res = sef.client.chat.completions.create(
             model=self.model_name,
             messages=self.list_message,
             max_tokens=self.max_tokens,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         self.list_message.append(
             {
                 "role": "assistant", "content": assistant_message
@@ -269,6 +276,8 @@ class QuestionAnsweringGenerator:
         self.topic = topic
         self.document = document
         self.model_name = model_name
+        # クライアント
+        self.client = OpenAI()
         # 雑な文字数制限対策
         self.max_tokens = int(max_tokens / 3)
     
@@ -289,12 +298,12 @@ class QuestionAnsweringGenerator:
                 "role": "user", "content": user_message
             },
         ]
-        res = openai.ChatCompletion.create(
+        res = sef.client.chat.completions.create(
             model=self.model_name,
             messages=list_message,
             max_tokens=self.max_tokens,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         return assistant_message
     
 
@@ -313,12 +322,13 @@ def create_table_of_contents(topic: str, model_name: str="gpt-3.5-turbo", max_to
             ...
         }}
     """
-    res = openai.ChatCompletion.create(
+    client = OpenAI()
+    res = client.chat.completions.create(
         model=model_name,
         messages=[{"role": "user", "content": user_message}],
         max_tokens=max_tokens,
     )
-    table_of_contents = res["choices"][0]["message"]["content"]
+    table_of_contents = res.choices[0].message.content
     return table_of_contents
 
 
@@ -337,7 +347,7 @@ def stream_chapter(
     max_tokens: int=3072,
 ) -> str:
     """生成した目次のkeyを与え、そのkeyのドキュメントを生成する"""
-
+    client = OpenAI()
     user_message = f"""
         「{topic}」というタイトルで教材を作成している。
         
@@ -352,7 +362,7 @@ def stream_chapter(
         - 担当部分以外の項目に関わる説明をあなたの担当部分の中に含めないこと
         - # {chapter}. {dict_table_of_contents[chapter]} という見出しで始まること
     """
-    res_stream = openai.ChatCompletion.create(
+    res_stream = client.chat.completions.create(
         model=model_name,
         messages=[{"role": "user", "content": user_message}],
         max_tokens=max_tokens,
