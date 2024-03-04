@@ -126,7 +126,7 @@ if st.session_state.dict_table_of_contents is not None and st.session_state.gene
             )
             collected_messages = []
             for chunk in res_stream:
-                chunk_message = chunk["choices"][0]["delta"].get("content")  # extract the message
+                chunk_message = chunk.choices[0].delta.content  # extract the message
                 if chunk_message is None:
                     continue
                 collected_messages.append(chunk_message)  # save the message

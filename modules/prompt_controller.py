@@ -74,7 +74,7 @@ class SequentialGenerator:
             messages=self.list_message,
             max_tokens=self.max_tokens_of_each_response,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         self.list_message.append(
             {
                 "role": "assistant", "content": assistant_message
@@ -130,7 +130,7 @@ class IndependentGenerator:
                 messages=[{"role": "user", "content": user_message}],
                 max_tokens=self.max_tokens,
             )
-            table_of_contents = res["choices"][0]["message"]["content"]
+            table_of_contents = res.choices[0].message.content
             try:
                 self.dict_table_of_contents = ast.literal_eval(table_of_contents)
                 is_success = True
@@ -162,7 +162,7 @@ class IndependentGenerator:
             messages=[{"role": "user", "content": user_message}],
             max_tokens=self.max_tokens,
         )
-        document = res["choices"][0]["message"]["content"]
+        document = res.choices[0].message.content
         self.dict_document[key] = document
 
 
@@ -205,7 +205,7 @@ class StepQuestionAnsweringGenerator:
             messages=list_message,
             max_tokens=self.max_tokens_of_each_response,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         return assistant_message
 
 
@@ -260,7 +260,7 @@ class BulkGenerator:
             messages=self.list_message,
             max_tokens=self.max_tokens,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         self.list_message.append(
             {
                 "role": "assistant", "content": assistant_message
@@ -303,7 +303,7 @@ class QuestionAnsweringGenerator:
             messages=list_message,
             max_tokens=self.max_tokens,
         )
-        assistant_message = res["choices"][0]["message"]["content"]
+        assistant_message = res.choices[0].message.content
         return assistant_message
     
 
@@ -328,7 +328,7 @@ def create_table_of_contents(topic: str, model_name: str="gpt-3.5-turbo", max_to
         messages=[{"role": "user", "content": user_message}],
         max_tokens=max_tokens,
     )
-    table_of_contents = res["choices"][0]["message"]["content"]
+    table_of_contents = res.choices[0].message.content
     return table_of_contents
 
 
